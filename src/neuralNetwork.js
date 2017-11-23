@@ -16,7 +16,7 @@ class ColorAccessibilityModel {
   session;
 
   // An optimizer with a certain initial learning rate. Used for training.
-  initialLearningRate = 0.042;
+  initialLearningRate = 0.06;
   optimizer;
 
   // Each training batch will be on this many examples.
@@ -38,13 +38,13 @@ class ColorAccessibilityModel {
     const graph = new Graph();
 
     this.inputTensor = graph.placeholder('input RGB value', [3]);
-    this.targetTensor = graph.placeholder('output RGB value', [3]);
+    this.targetTensor = graph.placeholder('output RGB value', [2]);
 
     let fullyConnectedLayer = this.createFullyConnectedLayer(graph, this.inputTensor, 0, 64);
     fullyConnectedLayer = this.createFullyConnectedLayer(graph, fullyConnectedLayer, 1, 32);
     fullyConnectedLayer = this.createFullyConnectedLayer(graph, fullyConnectedLayer, 2, 16);
 
-    this.predictionTensor = this.createFullyConnectedLayer(graph, fullyConnectedLayer, 3, 3);
+    this.predictionTensor = this.createFullyConnectedLayer(graph, fullyConnectedLayer, 3, 2);
     this.costTensor = graph.meanSquaredCost(this.targetTensor, this.predictionTensor);
 
     this.session = new Session(graph, math);
@@ -57,7 +57,7 @@ class ColorAccessibilityModel {
       const { rawInputs, rawTargets } = trainingSet;
 
       const inputArray = rawInputs.map(v => Array1D.new(this.normalizeColor(v)));
-      const targetArray = rawTargets.map(v => Array1D.new(this.normalizeColor(v)));
+      const targetArray = rawTargets.map(v => Array1D.new(v));
 
       const shuffledInputProviderBuilder = new InCPUMemoryShuffledInputProviderBuilder([ inputArray, targetArray ]);
       const [ inputProvider, targetProvider ] = shuffledInputProviderBuilder.getInputProviders();
@@ -99,7 +99,7 @@ class ColorAccessibilityModel {
   }
 
   predict(rgb) {
-    let accessibleColor = [];
+    let classifier = [];
 
     math.scope((keep, track) => {
       const mapping = [{
@@ -107,14 +107,10 @@ class ColorAccessibilityModel {
         data: Array1D.new(this.normalizeColor(rgb)),
       }];
 
-      const values = this.session.eval(this.predictionTensor, mapping).getValues();
-      const colors = this.denormalizeColor([ ...values ]);
-
-      // Make sure the values are within range.
-      accessibleColor = colors.map(v => Math.round(Math.max(Math.min(v, 255), 0)));
+      classifier = this.session.eval(this.predictionTensor, mapping).getValues();
     });
 
-    return accessibleColor;
+    return [ ...classifier ];
   }
 
   // Util

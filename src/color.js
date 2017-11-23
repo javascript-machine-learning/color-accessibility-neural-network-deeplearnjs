@@ -14,7 +14,9 @@ function getAccessibleColor(rgb) {
 
   let L = (0.2126 * c[0]) + (0.7152 * c[1]) + (0.0722 * c[2]);
 
-  return (L > 0.179) ? [ 0, 0, 0 ] : [ 255, 255, 255];
+  return (L > 0.179)
+    ? [ 0, 1 ] // black
+    : [ 1, 0 ]; // white
 }
 
 function generateRandomRgbColors(m) {

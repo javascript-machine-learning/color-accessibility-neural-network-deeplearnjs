@@ -5,8 +5,8 @@ import './App.css';
 import generateColorSet from './data';
 import ColorAccessibilityModel from './neuralNetwork';
 
-const ITERATIONS = 1000;
-const TRAINING_SET_SIZE = 5000;
+const ITERATIONS = 750;
+const TRAINING_SET_SIZE = 1500;
 const TEST_SET_SIZE = 10;
 
 class App extends Component {
@@ -26,6 +26,7 @@ class App extends Component {
 
     this.state = {
       currentIteration: 0,
+      cost: -42,
     };
   }
 
@@ -39,18 +40,24 @@ class App extends Component {
     if (this.state.currentIteration < ITERATIONS) {
       requestAnimationFrame(this.tick);
 
-      this.colorAccessibilityModel.train(this.state.currentIteration, false);
+      let computeCost = !(this.state.currentIteration % 5);
+      let cost = this.colorAccessibilityModel.train(this.state.currentIteration, computeCost);
+
+      if (cost > 0) {
+        this.setState(() => ({ cost }));
+      }
     }
   };
 
   render() {
-    const { currentIteration } = this.state;
+    const { currentIteration, cost } = this.state;
 
     return (
       <div className="app">
         <div>
           <h1>Neural Network for Font Color Accessibility</h1>
           <p>Iterations: {currentIteration}</p>
+          <p>Cost: {cost}</p>
         </div>
 
         <div className="content">
@@ -80,7 +87,7 @@ const ActualTable = ({ testSet }) =>
       <ColorBox
         key={i}
         rgbInput={testSet.rawInputs[i]}
-        rgbTarget={testSet.rawTargets[i]}
+        rgbTarget={fromClassifierToRgb(testSet.rawTargets[i])}
       />
     )}
   </div>
@@ -92,7 +99,7 @@ const InferenceTable = ({ testSet, model }) =>
       <ColorBox
         key={i}
         rgbInput={testSet.rawInputs[i]}
-        rgbTarget={model.predict(testSet.rawInputs[i])}
+        rgbTarget={fromClassifierToRgb(model.predict(testSet.rawInputs[i]))}
       />
     )}
   </div>
@@ -109,5 +116,10 @@ const RgbString = ({ rgb }) =>
 
 const getRgbStyle = (rgb) =>
   `rgb(${rgb[0]}, ${rgb[1]}, ${rgb[2]})`
+
+const fromClassifierToRgb = (classifier) =>
+  classifier[0] > classifier[1]
+    ? [ 255, 255, 255 ]
+    : [ 0, 0, 0 ]
 
 export default App;
