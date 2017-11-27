@@ -49,10 +49,10 @@ class ColorAccessibilityModel {
 
     this.session = new Session(graph, math);
 
-    this.generateTrainingData(trainingSet);
+    this.prepareTrainingSet(trainingSet);
   }
 
-  generateTrainingData(trainingSet) {
+  prepareTrainingSet(trainingSet) {
     math.scope(() => {
       const { rawInputs, rawTargets } = trainingSet;
 
