@@ -76,22 +76,20 @@ class ColorAccessibilityModel {
     this.optimizer.setLearningRate(learningRate);
 
     // Train one batch.
-    let costValue = -1;
+    let costValue;
     math.scope(() => {
       const cost = this.session.train(
-          this.costTensor,
-          this.feedEntries,
-          this.batchSize,
-          this.optimizer,
-          computeCost ? CostReduction.MEAN : CostReduction.NONE,
-        );
-
-      if (!computeCost) {
-        return;
-      }
+        this.costTensor,
+        this.feedEntries,
+        this.batchSize,
+        this.optimizer,
+        computeCost ? CostReduction.MEAN : CostReduction.NONE,
+      );
 
       // Compute the cost (by calling get), which requires transferring data from the GPU.
-      costValue = cost.get();
+      if (computeCost) {
+        costValue = cost.get();
+      }
     });
 
     return costValue;
