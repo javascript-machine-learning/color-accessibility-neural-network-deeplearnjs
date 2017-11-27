@@ -113,31 +113,25 @@ class ColorAccessibilityModel {
     return [ ...classifier ];
   }
 
-  // Util
-
   createFullyConnectedLayer(
     graph,
     inputLayer,
     layerIndex,
     units,
-    includeRelu = true,
-    includeBias = true
+    activationFunction
   ) {
     return graph.layers.dense(
       `fully_connected_${layerIndex}`,
       inputLayer,
       units,
-      includeRelu ? (x) => graph.relu(x) : undefined,
-      includeBias
+      activationFunction
+        ? activationFunction
+        : (x) => graph.relu(x)
     );
   }
 
   normalizeColor(rgb) {
     return rgb.map(v => v / 255);
-  }
-
-  denormalizeColor(rgb) {
-    return rgb.map(v => v * 255);
   }
 }
 
