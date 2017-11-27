@@ -70,9 +70,9 @@ class ColorAccessibilityModel {
     });
   }
 
-  train(step, shouldFetchCost) {
-    // Every 42 steps, lower the learning rate by 15%.
-    let learningRate = this.initialLearningRate * Math.pow(0.85, Math.floor(step / 42));
+  train(step, computeCost) {
+    // Every 50 steps, lower the learning rate by 10%.
+    let learningRate = this.initialLearningRate * Math.pow(0.90, Math.floor(step / 50));
     this.optimizer.setLearningRate(learningRate);
 
     // Train one batch.
@@ -83,11 +83,10 @@ class ColorAccessibilityModel {
           this.feedEntries,
           this.batchSize,
           this.optimizer,
-          shouldFetchCost ? CostReduction.MEAN : CostReduction.NONE,
+          computeCost ? CostReduction.MEAN : CostReduction.NONE,
         );
 
-      if (!shouldFetchCost) {
-        // We only train. We do not compute the cost.
+      if (!computeCost) {
         return;
       }
 
@@ -101,7 +100,7 @@ class ColorAccessibilityModel {
   predict(rgb) {
     let classifier = [];
 
-    math.scope((keep, track) => {
+    math.scope(() => {
       const mapping = [{
         tensor: this.inputTensor,
         data: Array1D.new(this.normalizeColor(rgb)),
