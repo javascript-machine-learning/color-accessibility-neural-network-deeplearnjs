@@ -26,7 +26,7 @@ class App extends Component {
 
     this.state = {
       currentIteration: 0,
-      cost: -42,
+      cost: -1,
     };
   }
 
@@ -55,7 +55,7 @@ class App extends Component {
     return (
       <div className="app">
         <div>
-          <h1>Neural Network for Font Color Accessibility</h1>
+          <h1>Neural Network for Web Accessibility in JavaScript</h1>
           <p>Iterations: {currentIteration}</p>
           <p>Cost: {cost}</p>
         </div>
