@@ -53,19 +53,21 @@ class ColorAccessibilityModel {
   }
 
   prepareTrainingSet(trainingSet) {
-    const { rawInputs, rawTargets } = trainingSet;
+    math.scope(() => {
+      const { rawInputs, rawTargets } = trainingSet;
 
-    const inputArray = rawInputs.map(v => Array1D.new(this.normalizeColor(v)));
-    const targetArray = rawTargets.map(v => Array1D.new(v));
+      const inputArray = rawInputs.map(v => Array1D.new(this.normalizeColor(v)));
+      const targetArray = rawTargets.map(v => Array1D.new(v));
 
-    const shuffledInputProviderBuilder = new InCPUMemoryShuffledInputProviderBuilder([ inputArray, targetArray ]);
-    const [ inputProvider, targetProvider ] = shuffledInputProviderBuilder.getInputProviders();
+      const shuffledInputProviderBuilder = new InCPUMemoryShuffledInputProviderBuilder([ inputArray, targetArray ]);
+      const [ inputProvider, targetProvider ] = shuffledInputProviderBuilder.getInputProviders();
 
-    // Maps tensors to InputProviders.
-    this.feedEntries = [
-      { tensor: this.inputTensor, data: inputProvider },
-      { tensor: this.targetTensor, data: targetProvider },
-    ];
+      // Maps tensors to InputProviders.
+      this.feedEntries = [
+        { tensor: this.inputTensor, data: inputProvider },
+        { tensor: this.targetTensor, data: targetProvider },
+      ];
+    });
   }
 
   train(step, computeCost) {
