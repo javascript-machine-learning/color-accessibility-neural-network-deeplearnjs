@@ -4,14 +4,15 @@ import {
   Graph,
   Session,
   SGDOptimizer,
-  NDArrayMathGPU,
+  ENV,
+  NDArrayMath,
   CostReduction,
 } from 'deeplearn';
 
-// Encapsulates math operations on the CPU and GPU.
-const math = new NDArrayMathGPU();
-
 class ColorAccessibilityModel {
+  // Encapsulates math operations on the CPU and GPU.
+  math = ENV.math;
+
   // Runs training.
   session;
 
@@ -47,27 +48,32 @@ class ColorAccessibilityModel {
     this.predictionTensor = this.createFullyConnectedLayer(graph, fullyConnectedLayer, 3, 2);
     this.costTensor = graph.meanSquaredCost(this.targetTensor, this.predictionTensor);
 
-    this.session = new Session(graph, math);
+    this.session = new Session(graph, this.math);
 
     this.prepareTrainingSet(trainingSet);
   }
 
   prepareTrainingSet(trainingSet) {
-    math.scope(() => {
-      const { rawInputs, rawTargets } = trainingSet;
+    const oldMath = ENV.math;
+    const safeMode = false;
+    const math = new NDArrayMath('cpu', safeMode);
+    ENV.setMath(math);
 
-      const inputArray = rawInputs.map(v => Array1D.new(this.normalizeColor(v)));
-      const targetArray = rawTargets.map(v => Array1D.new(v));
+    const { rawInputs, rawTargets } = trainingSet;
 
-      const shuffledInputProviderBuilder = new InCPUMemoryShuffledInputProviderBuilder([ inputArray, targetArray ]);
-      const [ inputProvider, targetProvider ] = shuffledInputProviderBuilder.getInputProviders();
+    const inputArray = rawInputs.map(v => Array1D.new(this.normalizeColor(v)));
+    const targetArray = rawTargets.map(v => Array1D.new(v));
 
-      // Maps tensors to InputProviders.
-      this.feedEntries = [
-        { tensor: this.inputTensor, data: inputProvider },
-        { tensor: this.targetTensor, data: targetProvider },
-      ];
-    });
+    const shuffledInputProviderBuilder = new InCPUMemoryShuffledInputProviderBuilder([ inputArray, targetArray ]);
+    const [ inputProvider, targetProvider ] = shuffledInputProviderBuilder.getInputProviders();
+
+    // Maps tensors to InputProviders.
+    this.feedEntries = [
+      { tensor: this.inputTensor, data: inputProvider },
+      { tensor: this.targetTensor, data: targetProvider },
+    ];
+
+    ENV.setMath(oldMath);
   }
 
   train(step, computeCost) {
@@ -77,7 +83,7 @@ class ColorAccessibilityModel {
 
     // Train one batch.
     let costValue;
-    math.scope(() => {
+    this.math.scope(() => {
       const cost = this.session.train(
         this.costTensor,
         this.feedEntries,
@@ -98,7 +104,7 @@ class ColorAccessibilityModel {
   predict(rgb) {
     let classifier = [];
 
-    math.scope(() => {
+    this.math.scope(() => {
       const mapping = [{
         tensor: this.inputTensor,
         data: Array1D.new(this.normalizeColor(rgb)),
